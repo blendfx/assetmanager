@@ -17,11 +17,17 @@ def localize():
     this_script = Path(os.path.abspath(__file__))
     remote_file_script = this_script.parent / "remote_file_script.py"
     executable = os.path.abspath(bpy.app.binary_path)
-    localizer = context.scene.localizer
-    new_path = bpy.path.abspath(localizer.lib_path)
+    localizer = context.object.localizer
+
+    if localizer.lib_path:
+        new_path = bpy.path.abspath(localizer.lib_path)
+    else:
+        new_path = str(Path(bpy.data.filepath).parent / "lib")
+
+
     original_link_file = bpy.path.abspath(original_link_file) 
     print(remote_file_script)
     command = [executable, "--background", original_link_file, "--python", remote_file_script, "--", collection.name, str(new_path)]
     print(command)
     subprocess.call(command)
-    collection.library.filepath = str(Path(new_path) / (Path(original_link_file).stem + ".blend"))
+    collection.library.filepath = bpy.path.relpath(str(Path(new_path) / (Path(original_link_file).stem + ".blend")))

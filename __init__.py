@@ -47,9 +47,17 @@ class WM_OT_Localize(Operator):
         localize()
         return {'FINISHED'}
 
+def ui_draw(self, context):
+    layout = self.layout
+    localizer = context.object.localizer
+
+    layout.prop(localizer, "lib_path")
+    layout.operator("wm.localize")
+    layout.separator()
+
 class OBJECT_PT_LocalizePanel(Panel):
     bl_label = "Localizer"
-    bl_idname = "OBJECT_PT_custom_panel"
+    bl_idname = "OBJECT_PT_localize_panel"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "object"
@@ -60,18 +68,28 @@ class OBJECT_PT_LocalizePanel(Panel):
         return context.object is not None
 
     def draw(self, context):
-        layout = self.layout
-        scene = context.scene
-        localizer = scene.localizer
+        ui_draw(self, context)
 
-        layout.prop(localizer, "lib_path")
-        layout.operator("wm.localize")
-        layout.separator()
+class OBJECT_PT_LocalizePanel3D(Panel):
+    bl_label = "Localizer"
+    bl_idname = "OBJECT_PT_localize_panel_3d"
+    bl_space_type = "VIEW_3D"   
+    bl_region_type = "UI"
+    bl_category = "Item"
+    bl_context = "objectmode"   
+
+    @classmethod
+    def poll(self,context):
+        return context.object is not None
+
+    def draw(self, context):
+        ui_draw(self, context)
 
 classes = (
     LocalizerProperties,
     WM_OT_Localize,
     OBJECT_PT_LocalizePanel,
+    OBJECT_PT_LocalizePanel3D,
 )
 
 def register():
@@ -79,13 +97,13 @@ def register():
     for cls in classes:
         register_class(cls)
 
-    bpy.types.Scene.localizer = PointerProperty(type=LocalizerProperties)
+    bpy.types.Object.localizer = PointerProperty(type=LocalizerProperties)
 
 def unregister():
     from bpy.utils import unregister_class
     for cls in reversed(classes):
         unregister_class(cls)
-    del bpy.types.Scene.localizer
+    del bpy.types.Object.localizer
 
 
 if __name__ == "__main__":

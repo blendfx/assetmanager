@@ -11,7 +11,7 @@ bl_info = {
     "category": "Import-Export"
 }
 
-
+from pathlib import Path
 import bpy
 from .localize import localize
 
@@ -29,14 +29,20 @@ from bpy.types import (Panel,
                        PropertyGroup,
                        )
 
+def path_update(self, context, origin):
+    if not getattr(self, origin):
+        path = bpy.path.relpath(str(Path(bpy.data.filepath).parent / "lib"))
+        setattr(self, origin, path)
+
 class LocalizerProperties(PropertyGroup):
 
     lib_path: StringProperty(
         name = "Local Library Path",
         description="Local Library Path:",
-        default="",
+        default="//lib/",
         maxlen=1024,
-        subtype='DIR_PATH'
+        subtype='DIR_PATH',
+        update=lambda self, context: path_update(self, context, 'lib_path')
         )
 
 class WM_OT_Localize(Operator):
@@ -54,6 +60,7 @@ def ui_draw(self, context):
     layout.prop(localizer, "lib_path")
     layout.operator("wm.localize")
     layout.separator()
+        
 
 class OBJECT_PT_LocalizePanel(Panel):
     bl_label = "Localizer"

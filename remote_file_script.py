@@ -9,7 +9,12 @@ def main():
     new_path = argv[1]
     old_path = Path(bpy.data.filepath)
     filename = old_path.stem + ".blend"
-    bpy.ops.file.pack_all()
+
+    try:
+        bpy.ops.file.pack_all()
+    except RuntimeError as ex:
+        error_report = "\n".join(ex.args)
+        print("Caught error:", error_report)
     
     bpy.ops.wm.save_as_mainfile(filepath=str(Path(new_path) / filename))
 

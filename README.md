@@ -13,4 +13,4 @@ Here you can see how to use it:
 
 A gif of a demonstration:
 
-![explanational gif](/explain0001-0871.gif)
+![explanational gif](/explain_small.gif)

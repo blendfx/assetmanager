@@ -1,11 +1,11 @@
 bl_info = {
     "name": "Asset Localizer",
-    "description": "",
+    "description": "Save a packed version of a linked collection file locally.",
     "author": "Jonas Dichelle, BlendFx",
     "version": (0, 0, 1),
     "blender": (2, 80, 0),
     "location": "Properties > Object",
-    "warning": "", # used for warning icon and text in addons panel
+    "warning": "",
     "wiki_url": "",
     "tracker_url": "",
     "category": "Import-Export"
@@ -27,25 +27,52 @@ from bpy.types import (Panel,
                        Menu,
                        Operator,
                        PropertyGroup,
+                       AddonPreferences
                        )
 
 def path_update(self, context, origin):
     if not getattr(self, origin):
-        path = bpy.path.relpath(str(Path(bpy.data.filepath).parent / "lib"))
+        preferences = bpy.context.preferences
+        addon_prefs = preferences.addons[__name__].preferences
+        path = bpy.path.relpath(str(Path(bpy.data.filepath).parent / addon_prefs.default_lib_path))
         setattr(self, origin, path)
 
+def upate_default(self, context, origin):
+    if not getattr(self, origin):
+        setattr(self, origin, "//lib/")
+
+class LocalizerPreferences(AddonPreferences):
+    bl_idname = __name__
+
+    default_lib_path: bpy.props.StringProperty(
+        name="Default relative lib path:",
+        description="Default path to save assets to locally, relative to the blendfile",
+        default="//lib/",
+        maxlen=1024,
+        subtype='DIR_PATH',
+        update=lambda self, context: upate_default(self, context, 'default_lib_path')
+        )
+
+    def draw(self, context):
+        self.layout.prop(self, "default_lib_path")
+
+bpy.utils.register_class(LocalizerPreferences)
+
 class LocalizerProperties(PropertyGroup):
+    preferences = bpy.context.preferences
+    addon_prefs = preferences.addons[__name__].preferences
 
     lib_path: StringProperty(
         name = "Local Library Path",
-        description="Local Library Path:",
-        default="//lib/",
+        description="Path to save asset to.",
+        default=addon_prefs.default_lib_path,
         maxlen=1024,
         subtype='DIR_PATH',
         update=lambda self, context: path_update(self, context, 'lib_path')
         )
 
 class WM_OT_Localize(Operator):
+    """Save a packed version of the linked file, to the specified lib location"""
     bl_label = "Localize"
     bl_idname = "wm.localize"
 
@@ -61,6 +88,13 @@ def ui_draw(self, context):
     layout.operator("wm.localize")
     layout.separator()
         
+def ui_poll(self, context):
+    poll_true = False
+    if context.object:
+        if context.object.instance_collection:
+            poll_true = True
+
+    return poll_true
 
 class OBJECT_PT_LocalizePanel(Panel):
     bl_label = "Localizer"
@@ -69,10 +103,9 @@ class OBJECT_PT_LocalizePanel(Panel):
     bl_region_type = "WINDOW"
     bl_context = "object"
 
-
     @classmethod
     def poll(self,context):
-        return context.object is not None
+        return ui_poll(self, context)
 
     def draw(self, context):
         ui_draw(self, context)
@@ -87,7 +120,7 @@ class OBJECT_PT_LocalizePanel3D(Panel):
 
     @classmethod
     def poll(self,context):
-        return context.object is not None
+        return ui_poll(self, context)
 
     def draw(self, context):
         ui_draw(self, context)
@@ -110,6 +143,7 @@ def unregister():
     from bpy.utils import unregister_class
     for cls in reversed(classes):
         unregister_class(cls)
+    bpy.utils.unregister_class(LocalizerPreferences)
     del bpy.types.Object.localizer
 
 

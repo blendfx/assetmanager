@@ -1,6 +1,8 @@
-import bpy
 import sys
 from pathlib import Path
+
+import bpy
+
 
 def main():
     argv = sys.argv
@@ -15,7 +17,9 @@ def main():
     except RuntimeError as ex:
         error_report = "\n".join(ex.args)
         print("Caught error:", error_report)
-    
+
     bpy.ops.wm.save_as_mainfile(filepath=str(Path(new_path) / filename))
 
+
 main()
+
